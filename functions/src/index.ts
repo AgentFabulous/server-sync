@@ -1,8 +1,12 @@
-import * as functions from 'firebase-functions';
+import * as functions from 'firebase-functions'
+import * as admin from 'firebase-admin'
+import { apiInternal as apiV1 } from './v1/main'
 
-// // Start writing Firebase Functions
-// // https://firebase.google.com/docs/functions/typescript
-//
-// export const helloWorld = functions.https.onRequest((request, response) => {
-//  response.send("Hello from Firebase!");
-// });
+admin.initializeApp(functions.config().firebase)
+
+const db = admin.firestore()
+const updatedb=admin.firestore
+
+const webAppV1 = functions.https.onRequest(apiV1)
+
+export { db, webAppV1, updatedb }
