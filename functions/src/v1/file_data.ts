@@ -23,9 +23,16 @@ fileDataModule.post('/', async (req, res) => {
         return
     }
     
-    const exist = await firebaseHelper.firestore.checkDocumentExists(db,fileDataCollection,req.body['id'])
-    if (exist == true) {
-        res.status(403).send(`fileData entry already exists! ref: ${req.body['id']}`)
+    const result = await firebaseHelper.firestore.checkDocumentExists(db,fileDataCollection,req.body['id'])
+    if (result.exists) {
+        const currentDoc:fileData = await firebaseHelper.firestore.getDocument(db, fileDataCollection, req.body['id'])
+        const newMirrors = new Set<string>()
+        Array.from(currentDoc.mirrors).forEach((element: any) => newMirrors.add(element))
+        Array.from(req.body['mirrors']).forEach((element: any) => newMirrors.add(element))
+        currentDoc.mirrors = Array.from(newMirrors)
+        await firebaseHelper.firestore
+            .updateDocument(db, fileDataCollection, req.body['id'], currentDoc)
+        res.status(201).send(`fileData entry already exists! Appended mirrors for ref: ${req.body['id']}`)
         return
     }
     try {
@@ -45,8 +52,8 @@ fileDataModule.post('/', async (req, res) => {
 
 // Add mirrors
 fileDataModule.post('/mirror/:fileDataId', async (req, res) => {
-    const exist = await firebaseHelper.firestore.checkDocumentExists(db,fileDataCollection, req.params.fileDataId)
-    if (!exist) {
+    const result = await firebaseHelper.firestore.checkDocumentExists(db,fileDataCollection, req.params.fileDataId)
+    if (!result.exists) {
         res.status(403).send(`fileData does not exist! ref: ${req.params.fileDataId}`)
         return
     }
@@ -80,9 +87,15 @@ fileDataModule.delete('/mirror/:fileDataId', async (req, res) => {
     Array.from(currentDoc.mirrors).forEach((element: any) => newMirrors.add(element))
     Array.from(req.body['mirrors']).forEach((element: any) => newMirrors.delete(element))
     currentDoc.mirrors = Array.from(newMirrors)
-    const updatedDoc = await firebaseHelper.firestore
-        .updateDocument(db, fileDataCollection, req.params.fileDataId, currentDoc)
-    res.status(204).send(`Update a new fileData: ${updatedDoc}`)
+    if (currentDoc.mirrors.length === 0) {
+        const deletedfileData = await firebaseHelper.firestore
+            .deleteDocument(db, fileDataCollection, req.params.fileDataId)
+        res.status(204).send(`fileData is deleted: ${deletedfileData}`)
+    } else {
+        const updatedDoc = await firebaseHelper.firestore
+            .updateDocument(db, fileDataCollection, req.params.fileDataId, currentDoc)
+        res.status(204).send(`Update a new fileData: ${updatedDoc}`)
+    }
 })
 
 // Update new fileData
@@ -119,8 +132,8 @@ fileDataModule.get('/', (req, res) => {
 
 // Delete a fileData
 fileDataModule.delete('/:fileDataId', async (req, res) => {
-    const exist = await firebaseHelper.firestore.checkDocumentExists(db,fileDataCollection,req.params.fileDataId)
-    if (exist) {
+    const result = await firebaseHelper.firestore.checkDocumentExists(db,fileDataCollection,req.params.fileDataId)
+    if (result.exists) {
         const deletedfileData = await firebaseHelper.firestore
             .deleteDocument(db, fileDataCollection, req.params.fileDataId)
         res.status(204).send(`fileData is deleted: ${deletedfileData}`)

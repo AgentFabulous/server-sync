@@ -13,7 +13,7 @@ const authMiddleware = function (req: any, res: any, next: any) {
   if (req.headers.authorization !== apiKey) {
     return res.status(403).json({ error: 'Unauthorized request!' });
   }
-  if (!req.is('application/json')) {
+  if (req.get('content-type') !== 'application/json') {
     return res.status(403).json({ error: 'Content must be json!' });
   }
   next();
