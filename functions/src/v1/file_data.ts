@@ -8,6 +8,7 @@ class fileData {
         public id: string = '',
         public date: number = -1,
         public mirrors: string[] = [],
+        public sfupload: boolean = false,
     ) { }
 }
 
@@ -41,6 +42,7 @@ fileDataModule.post('/', async (req, res) => {
             id: req.body['id'],
             date: new Date().getTime(),
             mirrors: req.body['mirrors'],
+            sfupload: false,
         }
         await firebaseHelper.firestore
             .createDocumentWithID(db, fileDataCollection, newFile.id, newFile)
@@ -96,6 +98,34 @@ fileDataModule.delete('/mirror/:fileDataId', async (req, res) => {
             .updateDocument(db, fileDataCollection, req.params.fileDataId, currentDoc)
         res.status(204).send(`Update a new fileData: ${updatedDoc}`)
     }
+})
+
+// Set sfupload
+fileDataModule.post('/sfupload/:fileDataId', async (req, res) => {
+    const result = await firebaseHelper.firestore.checkDocumentExists(db,fileDataCollection, req.params.fileDataId)
+    if (!result.exists) {
+        res.status(403).send(`fileData does not exist! ref: ${req.params.fileDataId}`)
+        return
+    }
+    const currentDoc:fileData = await firebaseHelper.firestore.getDocument(db, fileDataCollection, req.params.fileDataId)
+    currentDoc.sfupload = true
+    const updatedDoc = await firebaseHelper.firestore
+        .updateDocument(db, fileDataCollection, req.params.fileDataId, currentDoc)
+    res.status(204).send(`sfupload set: ${updatedDoc}`)
+})
+
+// Unset sfupload
+fileDataModule.delete('/sfupload/:fileDataId', async (req, res) => {
+    const result = await firebaseHelper.firestore.checkDocumentExists(db,fileDataCollection, req.params.fileDataId)
+    if (!result.exists) {
+        res.status(403).send(`fileData does not exist! ref: ${req.params.fileDataId}`)
+        return
+    }
+    const currentDoc:fileData = await firebaseHelper.firestore.getDocument(db, fileDataCollection, req.params.fileDataId)
+    currentDoc.sfupload = false
+    const updatedDoc = await firebaseHelper.firestore
+        .updateDocument(db, fileDataCollection, req.params.fileDataId, currentDoc)
+    res.status(204).send(`sfupload unset: ${updatedDoc}`)
 })
 
 // Update new fileData
