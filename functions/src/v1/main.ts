@@ -8,7 +8,7 @@ const version = '/api/v1'
 
 const fileDataApi = utils.registerModule('/file', fileDataModule)
 
-const apiKey = functions.config().tab_api.client_key;
+const apiKey = functions.config().api.client_key;
 const authMiddleware = function (req: any, res: any, next: any) {
   if (req.headers.authorization !== apiKey) {
     return res.status(403).json({ error: 'Unauthorized request!' });
