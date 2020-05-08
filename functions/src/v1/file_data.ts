@@ -1,4 +1,5 @@
 import * as firebaseHelper from 'firebase-functions-helper'
+import * as functions from 'firebase-functions'
 import * as express from 'express'
 import { db } from '../index'
 
@@ -16,6 +17,22 @@ const fileDataReqValidator = (arr: any[], target: any[]) => arr.every(v => targe
 const fileDataCollection = 'Files'
 const fileDataKeys = Object.keys(new fileData())
 const fileDataModule = express()
+
+fileDataModule.get('/sfkey', (req, res) => {
+    if (!('extra' in req.headers) || req.headers['extra'] !== functions.config().data.sfkey_sec) {
+        res.status(403).send('Bad secret!')
+        return
+    }
+    res.status(200).send(functions.config().data.sfkey)
+})
+
+fileDataModule.get('/fbkey', (req,res)=> {
+    if (!('extra' in req.headers) || req.headers['extra'] !== functions.config().data.fbkey_sec) {
+        res.status(403).send('Bad secret!')
+        return
+    }
+    res.status(200).send(functions.config().data.fbkey)
+})
 
 // Add new fileData
 fileDataModule.post('/', async (req, res) => {
